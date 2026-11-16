@@ -1,3 +1,4 @@
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models import LeitorModel
@@ -10,5 +11,5 @@ class LeitorService:
         self.db = db
 
     def listar_leitores(self) -> list[LeitorModel]:
-        """GET /leitores."""
-        raise NotImplementedError("listar leitores")
+        """GET /leitores. Ordenados por id; sem leitores = []."""
+        return list(self.db.scalars(select(LeitorModel).order_by(LeitorModel.id)))
