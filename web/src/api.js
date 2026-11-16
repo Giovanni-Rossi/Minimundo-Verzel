@@ -2,12 +2,20 @@
 // Segue o contrato em openapi-biblioteca.yaml (na raiz do repositório).
 // As telas chamam as funções daqui e nunca usam fetch direto.
 
+import * as mock from './mock.js'
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+
+// Com VITE_MOCK=true (em web/.env.local) o front usa os dados fixos de mock.js
+// em vez da API, para rodar sem o back-end.
+const USAR_MOCK = import.meta.env.VITE_MOCK === 'true'
 
 // Faz a chamada e devolve o JSON da resposta.
 // Se a API recusar, lança um Error com a mensagem que ela mandou,
 // para a tela mostrar: catch (e) { setErro(e.message) }
 async function chamar(caminho, opcoes = {}) {
+  if (USAR_MOCK) return mock.responder(caminho, opcoes)
+
   let resposta
   try {
     resposta = await fetch(API_URL + caminho, {
@@ -82,5 +90,6 @@ export function listarEmprestimos(filtros) {
 // BIBL-5 — link do CSV com os mesmos filtros do relatório.
 // Atenção: filtro inválido volta 400 em JSON, não um arquivo.
 export function urlCsv(filtros) {
+  if (USAR_MOCK) return mock.urlCsv(montarFiltros(filtros))
   return API_URL + '/emprestimos/export.csv' + montarFiltros(filtros)
 }
