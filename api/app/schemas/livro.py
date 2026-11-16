@@ -1,15 +1,17 @@
+from pydantic import Field
+
 from app.schemas.base import SchemaBase
 
 
 class LivroNovo(SchemaBase):
     """Corpo do POST /livros (BIBL-1).
 
-    As validações do BIBL-1 ficam com quem implementar a história, usando as mensagens do contrato:
-    "Título é obrigatório." | "Ano não pode ser no futuro." | "Cópias não podem ser negativas."
+    As regras do BIBL-1 (título vazio, ano no futuro, cópias negativas) ficam no LivroService,
+    com as mensagens do contrato. Os max_length só evitam estourar o tamanho das colunas.
     """
 
-    titulo: str
-    autor: str
+    titulo: str = Field(max_length=200)
+    autor: str = Field(max_length=150)
     ano: int
     copias_disponiveis: int
 

@@ -13,10 +13,12 @@ from app.seed import semear_leitores
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    # Sem migrations por enquanto: cria as tabelas que faltarem e semeia os leitores.
-    Base.metadata.create_all(bind=engine)
-    with SessionLocal() as db:
-        semear_leitores(db)
+    if settings.criar_tabelas:
+        # Banco local: cria as tabelas que faltarem e semeia os leitores.
+        # No Postgres do time de banco (CRIAR_TABELAS=false) a API não mexe no schema.
+        Base.metadata.create_all(bind=engine)
+        with SessionLocal() as db:
+            semear_leitores(db)
     yield
 
 
