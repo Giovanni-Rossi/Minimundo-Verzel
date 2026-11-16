@@ -3,13 +3,20 @@
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { cadastrarLivro, emprestar, listarLeitores, listarLivros } from '../api.js'
+import {
+  cadastrarLivro,
+  emprestar,
+  listarEmprestimos,
+  listarLeitores,
+  listarLivros,
+} from '../api.js'
 import { livroSchema } from '../schemas/livro.js'
 
 export default function Acervo() {
   // Dados que vêm da API
   const [livros, setLivros] = useState([])
   const [leitores, setLeitores] = useState([])
+  const [ativos, setAtivos] = useState([]) // empréstimos ainda não devolvidos
   const [carregando, setCarregando] = useState(true)
   const [erroLista, setErroLista] = useState('')
 
@@ -32,10 +39,16 @@ export default function Acervo() {
   const [mensagem, setMensagem] = useState('')
   const [emprestandoId, setEmprestandoId] = useState(null)
 
-  // Busca a lista de livros de novo (usada ao abrir a tela e depois de cada ação).
+  // Busca os livros e os empréstimos ativos de novo
+  // (usada ao abrir a tela e depois de cada ação).
   async function carregarLivros() {
     try {
-      setLivros(await listarLivros())
+      const [listaLivros, listaAtivos] = await Promise.all([
+        listarLivros(),
+        listarEmprestimos({ situacao: 'ativo' }),
+      ])
+      setLivros(listaLivros)
+      setAtivos(listaAtivos)
       setErroLista('')
     } catch (e) {
       setErroLista(e.message)
@@ -69,10 +82,20 @@ export default function Acervo() {
     }
   }
 
+  // O leitor escolhido já está com este livro (empréstimo ativo)?
+  // Regra da tela: a mesma pessoa não pega duas cópias do mesmo título.
+  function leitorJaTem(livro) {
+    return ativos.some((e) => e.livro.id === livro.id && String(e.leitor.id) === leitorId)
+  }
+
   async function aoEmprestar(livro) {
     setMensagem('')
     if (!leitorId) {
       setErroEmprestimo('Escolha um leitor antes de emprestar.')
+      return
+    }
+    if (leitorJaTem(livro)) {
+      setErroEmprestimo('Este leitor já está com este livro.')
       return
     }
 
@@ -177,9 +200,17 @@ export default function Acervo() {
                 <td>
                   <button
                     onClick={() => aoEmprestar(livro)}
-                    disabled={livro.copiasDisponiveis === 0 || emprestandoId === livro.id}
+                    disabled={
+                      livro.copiasDisponiveis === 0 ||
+                      leitorJaTem(livro) ||
+                      emprestandoId === livro.id
+                    }
                   >
-                    {livro.copiasDisponiveis === 0 ? 'Indisponível' : 'Emprestar'}
+                    {leitorJaTem(livro)
+                      ? 'Já está com o leitor'
+                      : livro.copiasDisponiveis === 0
+                        ? 'Indisponível'
+                        : 'Emprestar'}
                   </button>
                 </td>
               </tr>
