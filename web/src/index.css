@@ -101,3 +101,11 @@ button.secundario { background: transparent; color: var(--texto); border: 1px so
   .menu nav { flex-direction: row; flex-wrap: wrap; }
   .conteudo { padding: 20px 16px; }
 }
+
+/* Acervo */
+.formulario .campo-largo { flex: 2; min-width: 200px; }
+.formulario .campo-curto input { width: 90px; }
+.formulario .linha-inteira { flex-basis: 100%; margin: 0; }
+.barra { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 16px; margin-bottom: 16px; }
+.barra p { margin: 0 0 8px; }
+.sucesso { color: var(--destaque); margin: 8px 0; }
