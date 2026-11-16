@@ -1,6 +1,7 @@
 import { NavLink, Navigate, Route, Routes } from 'react-router-dom'
 import Acervo from './pages/Acervo.jsx'
 import Emprestimos from './pages/Emprestimos.jsx'
+import Leitores from './pages/Leitores.jsx'
 import Ranking from './pages/Ranking.jsx'
 import Relatorio from './pages/Relatorio.jsx'
 
@@ -10,6 +11,7 @@ const telas = [
   { caminho: '/emprestimos', nome: 'Empréstimos', componente: Emprestimos },
   { caminho: '/ranking', nome: 'Ranking', componente: Ranking },
   { caminho: '/relatorio', nome: 'Relatório', componente: Relatorio },
+  { caminho: '/leitores', nome: 'Leitores', componente: Leitores },
 ]
 
 export default function App() {
