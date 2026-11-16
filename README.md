@@ -123,5 +123,10 @@ A aplicação abre em `http://localhost:5173`. Por padrão ela procura a API em 
 | `src/pages/Relatorio.jsx`   | BIBL-4 e BIBL-5                                                |
 | `src/pages/Leitores.jsx`    | Histórico de cada leitor (empréstimos ativos e devolvidos)     |
 | `src/formatar.js`           | Formatação de datas e situação para exibir nas telas           |
+| `src/mock.js`               | Dados fixos que imitam a API, usados quando `VITE_MOCK=true`   |
+
+**Rodar sem o back-end**
+
+Crie `web/.env.local` com `VITE_MOCK=true` e rode `npm run dev`. O `api.js` passa a responder com os dados fixos de `src/mock.js` (mesmas regras e mensagens do contrato, inclusive o CSV). Os dados ficam em memória: recarregar a página volta ao estado inicial. Apague a linha (ou use `false`) para voltar a usar a API.
 
 Cada tela mora no seu próprio arquivo, para duas pessoas trabalharem sem conflito. As telas não usam `fetch` direto: chamam as funções de `api.js`, que lançam um erro com a mensagem da API quando ela recusa o pedido.
