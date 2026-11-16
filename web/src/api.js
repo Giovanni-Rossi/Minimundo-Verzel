@@ -1,7 +1,8 @@
 // Único arquivo que conversa com a API.
+// Segue o contrato em openapi-biblioteca.yaml (na raiz do repositório).
 // As telas chamam as funções daqui e nunca usam fetch direto.
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 // Faz a chamada e devolve o JSON da resposta.
 // Se a API recusar, lança um Error com a mensagem que ela mandou,
@@ -26,7 +27,7 @@ async function chamar(caminho, opcoes = {}) {
   return dados
 }
 
-// Transforma { usuario: 'Ana', situacao: '' } em "?usuario=Ana" (ignora filtros vazios).
+// Transforma { leitorId: 1, situacao: '' } em "?leitorId=1" (ignora filtros vazios).
 function montarFiltros(filtros = {}) {
   const params = new URLSearchParams()
   for (const [chave, valor] of Object.entries(filtros)) {
@@ -37,6 +38,7 @@ function montarFiltros(filtros = {}) {
 }
 
 // BIBL-1
+// Livro: { id, titulo, autor, ano, copiasDisponiveis }
 export function listarLivros() {
   return chamar('/livros')
 }
@@ -45,11 +47,18 @@ export function cadastrarLivro(livro) {
   return chamar('/livros', { method: 'POST', body: JSON.stringify(livro) })
 }
 
+// Leitores já vêm cadastrados no banco: [{ id, nome }]
+export function listarLeitores() {
+  return chamar('/leitores')
+}
+
 // BIBL-2
-export function emprestar(livro_id, usuario) {
+// Empréstimo: { id, livro: { id, titulo }, leitor: { id, nome },
+//               dataEmprestimo, dataDevolucao, situacao: 'ativo' | 'devolvido' }
+export function emprestar(livroId, leitorId) {
   return chamar('/emprestimos', {
     method: 'POST',
-    body: JSON.stringify({ livro_id, usuario }),
+    body: JSON.stringify({ livroId, leitorId }),
   })
 }
 
@@ -57,17 +66,17 @@ export function devolver(emprestimoId) {
   return chamar(`/emprestimos/${emprestimoId}/devolucao`, { method: 'POST' })
 }
 
-// BIBL-3
+// BIBL-3 — [{ livroId, titulo, totalEmprestimos }]
 export function listarRanking() {
   return chamar('/livros/ranking')
 }
 
-// BIBL-4 — filtros: { usuario, inicio, fim, situacao }
+// BIBL-4 — filtros: { leitorId, inicio, fim, situacao } (datas em AAAA-MM-DD)
 export function listarEmprestimos(filtros) {
   return chamar('/emprestimos' + montarFiltros(filtros))
 }
 
 // BIBL-5 — link do CSV com os mesmos filtros do relatório
 export function urlCsv(filtros) {
-  return API_URL + '/emprestimos/csv' + montarFiltros(filtros)
+  return API_URL + '/emprestimos/export.csv' + montarFiltros(filtros)
 }
