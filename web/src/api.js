@@ -12,13 +12,12 @@ async function chamar(caminho, opcoes = {}) {
   try {
     resposta = await fetch(API_URL + caminho, {
       ...opcoes,
-      headers: { 'Content-Type': 'application/json', ...opcoes.headers },
+      // Content-Type só quando há corpo (POST com JSON)
+      headers: opcoes.body ? { 'Content-Type': 'application/json' } : undefined,
     })
   } catch {
     throw new Error('Não foi possível conectar com a API.')
   }
-
-  if (resposta.status === 204) return null
 
   const dados = await resposta.json().catch(() => null)
   if (!resposta.ok) {
@@ -43,6 +42,8 @@ export function listarLivros() {
   return chamar('/livros')
 }
 
+// O contrato exige os quatro campos, com ano e copiasDisponiveis como número
+// (valor de <input> é texto: converta com Number() antes de chamar).
 export function cadastrarLivro(livro) {
   return chamar('/livros', { method: 'POST', body: JSON.stringify(livro) })
 }
@@ -58,7 +59,7 @@ export function listarLeitores() {
 export function emprestar(livroId, leitorId) {
   return chamar('/emprestimos', {
     method: 'POST',
-    body: JSON.stringify({ livroId, leitorId }),
+    body: JSON.stringify({ livroId: Number(livroId), leitorId: Number(leitorId) }),
   })
 }
 
@@ -71,12 +72,15 @@ export function listarRanking() {
   return chamar('/livros/ranking')
 }
 
-// BIBL-4 — filtros: { leitorId, inicio, fim, situacao } (datas em AAAA-MM-DD)
+// BIBL-4 — filtros: { leitorId, inicio, fim, situacao }, todos opcionais.
+// inicio e fim em AAAA-MM-DD (fim inclusivo); situacao: 'ativo' | 'devolvido'.
+// Filtro inválido volta 400 com { erro }. Empréstimos ativos: { situacao: 'ativo' }.
 export function listarEmprestimos(filtros) {
   return chamar('/emprestimos' + montarFiltros(filtros))
 }
 
-// BIBL-5 — link do CSV com os mesmos filtros do relatório
+// BIBL-5 — link do CSV com os mesmos filtros do relatório.
+// Atenção: filtro inválido volta 400 em JSON, não um arquivo.
 export function urlCsv(filtros) {
   return API_URL + '/emprestimos/export.csv' + montarFiltros(filtros)
 }
