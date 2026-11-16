@@ -126,3 +126,31 @@ tipo(escopo): descrição curta
 
 - Um commit, um assunto: commits pequenos são mais fáceis de revisar e de desfazer.
 - Branches seguem a mesma ideia: `feat/bibl-1-cadastro-livros`, `fix/bibl-2-devolucao`.
+
+## Front-end (`web/`)
+
+Feito em React + Vite, com `react-router-dom` para a navegação entre as telas.
+
+**Como rodar**
+
+```bash
+cd web
+npm install
+npm run dev
+```
+
+A aplicação abre em `http://localhost:5173`. Por padrão ela procura a API em `http://localhost:3000`; para mudar, copie `web/.env.example` para `web/.env` e ajuste `VITE_API_URL`.
+
+**Onde fica cada coisa**
+
+| Arquivo                     | O que é                                                        |
+| --------------------------- | -------------------------------------------------------------- |
+| `src/App.jsx`               | Menu lateral e rotas das telas                                 |
+| `src/api.js`                | Único arquivo que conversa com a API (uma função por rota)     |
+| `src/index.css`             | Estilos compartilhados (tabela, formulário, botões, erro)      |
+| `src/pages/Acervo.jsx`      | BIBL-1                                                         |
+| `src/pages/Emprestimos.jsx` | BIBL-2                                                         |
+| `src/pages/Ranking.jsx`     | BIBL-3                                                         |
+| `src/pages/Relatorio.jsx`   | BIBL-4 e BIBL-5                                                |
+
+Cada tela mora no seu próprio arquivo, para duas pessoas trabalharem sem conflito. As telas não usam `fetch` direto: chamam as funções de `api.js`, que lançam um erro com a mensagem da API quando ela recusa o pedido.
