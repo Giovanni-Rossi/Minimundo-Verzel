@@ -96,37 +96,6 @@ Ao emprestar, a quantidade de cópias disponíveis do livro diminui em 1. Ao dev
 - [ ] A exportação reflete o mesmo conjunto de empréstimos atualmente filtrado no relatório.
 - [ ] Exportar um relatório sem resultados gera um arquivo apenas com o cabeçalho, sem erro.
 
-## Padrão de commits
-
-Usamos o padrão [Conventional Commits](https://www.conventionalcommits.org/pt-br/), para que o histórico mostre de relance o que cada commit fez e a qual história ele pertence.
-
-**Formato**
-
-```
-tipo(escopo): descrição curta
-```
-
-- **tipo**: o que o commit faz (tabela abaixo).
-- **escopo**: a história relacionada, em minúsculas (`bibl-1`, `bibl-2`...). Pode ser omitido quando o commit não pertence a nenhuma história.
-- **descrição**: em português, verbo no presente ("adiciona", "corrige"), letra minúscula, sem ponto final.
-
-**Tipos**
-
-| Tipo       | Quando usar                                              | Exemplo                                                 |
-| ---------- | -------------------------------------------------------- | ------------------------------------------------------- |
-| `feat`     | Funcionalidade nova                                      | `feat(bibl-1): adiciona cadastro de livros`             |
-| `fix`      | Correção de bug                                          | `fix(bibl-2): impede devolução duplicada`               |
-| `docs`     | Documentação                                             | `docs: adiciona padrão de commits ao README`            |
-| `style`    | Formatação, sem mudar comportamento                      | `style(bibl-3): ajusta indentação do ranking`           |
-| `refactor` | Reorganização de código, sem mudar comportamento         | `refactor(bibl-4): extrai função de filtro`             |
-| `test`     | Criação ou ajuste de testes                              | `test(bibl-2): cobre limite de 3 empréstimos`           |
-| `chore`    | Configuração, dependências e tarefas de manutenção       | `chore: configura projeto e dependências`               |
-
-**Boas práticas**
-
-- Um commit, um assunto: commits pequenos são mais fáceis de revisar e de desfazer.
-- Branches seguem a mesma ideia: `feat/bibl-1-cadastro-livros`, `fix/bibl-2-devolucao`.
-
 ## Front-end (`web/`)
 
 Feito em React + Vite, com `react-router-dom` para a navegação entre as telas.
