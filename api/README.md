@@ -35,6 +35,26 @@ Nunca coloque o link com senha no código, no README ou no `.env.example`.
 | `CRIAR_TABELAS` | `true` | `true` cria tabelas e semeia leitores (local). `false` usa o schema do time de banco sem mexer. |
 | `CORS_ORIGINS` | `http://localhost:5173` | Endereços do front liberados, separados por vírgula. |
 
+### Deploy no Dokploy
+1. Crie uma **Application** apontando para este repositório, branch de deploy, **Build Path `/api`**
+   e **Build Type `Dockerfile`** (o arquivo é `api/Dockerfile`).
+2. Em **Environment**, configure (nada disso vai para o git):
+   | Variável | Valor |
+   |---|---|
+   | `DATABASE_URL` | link do Postgres do time de banco |
+   | `CORS_ORIGINS` | `https://<domínio do front>` (mais de um: separe por vírgula) |
+   | `CRIAR_TABELAS` | já vem `false` na imagem; não mude em produção |
+3. Em **Domains**, crie o domínio do back com **porta 8000** e HTTPS.
+4. Faça o deploy e abra `https://<domínio do back>/docs` para conferir.
+5. No front, configure `VITE_API_URL=https://<domínio do back>` e faça **rebuild** do front
+   (o Vite grava essa variável no build; só reiniciar não basta).
+
+Para testar a imagem localmente:
+```bash
+docker build -t biblioteca-api .
+docker run --rm -p 8000:8000 -e CRIAR_TABELAS=true biblioteca-api   # SQLite dentro do container
+```
+
 ### Testes
 ```bash
 pytest
