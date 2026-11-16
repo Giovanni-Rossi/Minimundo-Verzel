@@ -2,7 +2,7 @@
 
 O CSV reaproveita o relatorio_emprestimos (BIBL-4). Para testar o BIBL-5 sozinho, os testes
 substituem o relatório por uma lista conhecida (fixture relatorio_fake). O último teste usa o
-relatório de verdade e só passa quando o BIBL-4 estiver implementado.
+relatório de verdade.
 """
 
 from datetime import date, datetime, timezone
@@ -114,7 +114,6 @@ def test_filtro_mal_formatado_volta_400_em_json(client, relatorio_fake, query):
     assert "erro" in resposta.json()
 
 
-@pytest.mark.xfail(reason="Depende do relatorio_emprestimos (BIBL-4) ainda não implementado.")
 def test_csv_reflete_os_filtros_do_relatorio_de_verdade(client, emprestimos):
     resposta = client.get("/emprestimos/export.csv?situacao=devolvido")
 
