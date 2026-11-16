@@ -1,7 +1,8 @@
 // Único arquivo que conversa com a API.
+// Segue o contrato em openapi-biblioteca.yaml (na raiz do repositório).
 // As telas chamam as funções daqui e nunca usam fetch direto.
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 // Faz a chamada e devolve o JSON da resposta.
 // Se a API recusar, lança um Error com a mensagem que ela mandou,
@@ -11,13 +12,12 @@ async function chamar(caminho, opcoes = {}) {
   try {
     resposta = await fetch(API_URL + caminho, {
       ...opcoes,
-      headers: { 'Content-Type': 'application/json', ...opcoes.headers },
+      // Content-Type só quando há corpo (POST com JSON)
+      headers: opcoes.body ? { 'Content-Type': 'application/json' } : undefined,
     })
   } catch {
     throw new Error('Não foi possível conectar com a API.')
   }
-
-  if (resposta.status === 204) return null
 
   const dados = await resposta.json().catch(() => null)
   if (!resposta.ok) {
@@ -26,7 +26,7 @@ async function chamar(caminho, opcoes = {}) {
   return dados
 }
 
-// Transforma { usuario: 'Ana', situacao: '' } em "?usuario=Ana" (ignora filtros vazios).
+// Transforma { leitorId: 1, situacao: '' } em "?leitorId=1" (ignora filtros vazios).
 function montarFiltros(filtros = {}) {
   const params = new URLSearchParams()
   for (const [chave, valor] of Object.entries(filtros)) {
@@ -37,19 +37,29 @@ function montarFiltros(filtros = {}) {
 }
 
 // BIBL-1
+// Livro: { id, titulo, autor, ano, copiasDisponiveis }
 export function listarLivros() {
   return chamar('/livros')
 }
 
+// O contrato exige os quatro campos, com ano e copiasDisponiveis como número
+// (valor de <input> é texto: converta com Number() antes de chamar).
 export function cadastrarLivro(livro) {
   return chamar('/livros', { method: 'POST', body: JSON.stringify(livro) })
 }
 
+// Leitores já vêm cadastrados no banco: [{ id, nome }]
+export function listarLeitores() {
+  return chamar('/leitores')
+}
+
 // BIBL-2
-export function emprestar(livro_id, usuario) {
+// Empréstimo: { id, livro: { id, titulo }, leitor: { id, nome },
+//               dataEmprestimo, dataDevolucao, situacao: 'ativo' | 'devolvido' }
+export function emprestar(livroId, leitorId) {
   return chamar('/emprestimos', {
     method: 'POST',
-    body: JSON.stringify({ livro_id, usuario }),
+    body: JSON.stringify({ livroId: Number(livroId), leitorId: Number(leitorId) }),
   })
 }
 
@@ -57,17 +67,20 @@ export function devolver(emprestimoId) {
   return chamar(`/emprestimos/${emprestimoId}/devolucao`, { method: 'POST' })
 }
 
-// BIBL-3
+// BIBL-3 — [{ livroId, titulo, totalEmprestimos }]
 export function listarRanking() {
   return chamar('/livros/ranking')
 }
 
-// BIBL-4 — filtros: { usuario, inicio, fim, situacao }
+// BIBL-4 — filtros: { leitorId, inicio, fim, situacao }, todos opcionais.
+// inicio e fim em AAAA-MM-DD (fim inclusivo); situacao: 'ativo' | 'devolvido'.
+// Filtro inválido volta 400 com { erro }. Empréstimos ativos: { situacao: 'ativo' }.
 export function listarEmprestimos(filtros) {
   return chamar('/emprestimos' + montarFiltros(filtros))
 }
 
-// BIBL-5 — link do CSV com os mesmos filtros do relatório
+// BIBL-5 — link do CSV com os mesmos filtros do relatório.
+// Atenção: filtro inválido volta 400 em JSON, não um arquivo.
 export function urlCsv(filtros) {
-  return API_URL + '/emprestimos/csv' + montarFiltros(filtros)
+  return API_URL + '/emprestimos/export.csv' + montarFiltros(filtros)
 }
