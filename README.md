@@ -108,14 +108,14 @@ npm install
 npm run dev
 ```
 
-A aplicação abre em `http://localhost:5173`. Por padrão ela procura a API em `http://localhost:3000`; para mudar, copie `web/.env.example` para `web/.env` e ajuste `VITE_API_URL`.
+A aplicação abre em `http://localhost:5173`. Por padrão ela procura a API em `http://localhost:8000`; para mudar, copie `web/.env.example` para `web/.env` e ajuste `VITE_API_URL`.
 
 **Onde fica cada coisa**
 
 | Arquivo                     | O que é                                                        |
 | --------------------------- | -------------------------------------------------------------- |
 | `src/App.jsx`               | Menu lateral e rotas das telas                                 |
-| `src/api.js`                | Único arquivo que conversa com a API (uma função por rota)     |
+| `src/api.js`                | Único arquivo que conversa com a API, conforme o contrato OpenAPI |
 | `src/index.css`             | Estilos compartilhados (tabela, formulário, botões, erro)      |
 | `src/pages/Acervo.jsx`      | BIBL-1                                                         |
 | `src/pages/Emprestimos.jsx` | BIBL-2                                                         |
