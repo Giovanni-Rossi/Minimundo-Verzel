@@ -1,143 +1,369 @@
-/* Estilos compartilhados por todas as telas. */
+/* Identidade visual herdada do projeto Pregão: quase tudo em tons neutros,
+   cor só quando tem significado (verde = deu certo, vermelho = recusado). */
+
+/* ---------- Cores e medidas (tema claro por padrão) ---------- */
 :root {
-  --fundo: #181818;
-  --menu: #000000;
-  --cartao: #242424;
-  --borda: #3a3a3a;
-  --texto: #ffffff;
-  --texto-fraco: #b3b3b3;
-  --destaque: #1ed760;
-  --erro: #ff6b6b;
-  --aviso: #ffd43b;
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  color: var(--texto);
-  background: var(--fundo);
+  --bg: #fafafa;
+  --surface: #f1f1f1;
+  --surface-2: #e9e9e9;
+  --card: #ffffff;
+  --chip: #ececec;
+  --line: rgb(0 0 0 / 0.07);
+  --line-strong: rgb(0 0 0 / 0.13);
+  --ink: #141414;
+  --ink-2: #545454;
+  --ink-3: #6b6b6b;
+  --primary: #141414;
+  --primary-ink: #ffffff;
+  --up: #13753d;
+  --danger: #b8321f;
+  --focus: #fc6401;
+
+  --elev-pill: 0 1px 1px rgb(0 0 0 / 0.04), 0 4px 14px rgb(0 0 0 / 0.07), inset 0 0 0 1px rgb(0 0 0 / 0.04);
+  --elev-card: 0 1px 2px rgb(0 0 0 / 0.04), 0 0 0 1px var(--line);
+
+  --font-sans: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'Geist Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
+  --ease: cubic-bezier(0.32, 0.72, 0, 1);
+
+  /* Nomes antigos, mantidos para o código que ainda os usa. */
+  --fundo: var(--bg);
+  --cartao: var(--chip);
+  --borda: var(--line-strong);
+  --texto: var(--ink);
+  --texto-fraco: var(--ink-2);
+  --destaque: var(--up);
+  --erro: var(--danger);
+  --aviso: var(--danger);
+
+  color-scheme: light;
 }
 
+[data-theme='dark'] {
+  --bg: #0a0a0b;
+  --surface: #1a1a1d;
+  --surface-2: #232327;
+  --card: #121214;
+  --chip: #222225;
+  --line: rgb(255 255 255 / 0.07);
+  --line-strong: rgb(255 255 255 / 0.14);
+  --ink: #ededed;
+  --ink-2: #b0b0b6;
+  --ink-3: #8d8d94;
+  --primary: #f0f0f0;
+  --primary-ink: #0a0a0b;
+  --up: #3ddc84;
+  --danger: #ff6b5b;
+
+  --elev-pill: 0 1px 1px rgb(0 0 0 / 0.3), 0 6px 18px rgb(0 0 0 / 0.45), inset 0 0 0 1px rgb(255 255 255 / 0.06);
+  --elev-card: 0 0 0 1px var(--line);
+
+  color-scheme: dark;
+}
+
+/* ---------- Base ---------- */
 * { box-sizing: border-box; }
-body { margin: 0; }
-
-.app { display: flex; min-height: 100vh; }
-
-.menu {
-  width: 220px;
-  flex-shrink: 0;
-  background: var(--menu);
-  padding: 24px 12px;
+html { font-size: 15px; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.3s var(--ease), color 0.3s var(--ease);
 }
-.menu h1 { font-size: 22px; margin: 0 10px 28px; }
-.menu h1 span { display: block; font-size: 13px; font-weight: 400; color: var(--texto-fraco); }
-.menu nav { display: flex; flex-direction: column; gap: 4px; }
-.menu a {
-  padding: 10px 14px;
-  border-radius: 6px;
-  border-left: 4px solid transparent;
-  color: var(--texto-fraco);
+h1, h2, h3 { font-weight: 650; letter-spacing: -0.025em; line-height: 1.2; text-wrap: balance; }
+p { text-wrap: pretty; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+::selection { background: var(--ink); color: var(--bg); }
+
+/* Números que precisam alinhar (cópias, totais, datas, relógio). */
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+/* ---------- Estrutura: navegação à esquerda e conteúdo ---------- */
+.app { display: flex; min-height: 100dvh; }
+
+/* Painel de navegação: cartão flutuante preso à esquerda. */
+.lateral {
+  position: sticky;
+  top: 16px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  width: 216px;
+  height: calc(100dvh - 32px);
+  margin: 16px 0 16px 16px;
+  padding: 18px 10px 10px;
+  border-radius: 22px;
+  background: color-mix(in srgb, var(--card) 85%, transparent);
+  backdrop-filter: blur(14px) saturate(1.4);
+  box-shadow: var(--elev-pill);
+}
+.marca {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  color: var(--ink);
   text-decoration: none;
-}
-.menu a:hover { color: var(--texto); }
-.menu a.active { color: var(--texto); background: var(--cartao); border-left-color: var(--destaque); }
-
-.conteudo { flex: 1; min-width: 0; padding: 28px 32px; }
-.conteudo h2 { font-size: 30px; margin: 0 0 20px; }
-
-/* Peças prontas para usar nas telas */
-table { width: 100%; border-collapse: collapse; }
-th {
-  text-align: left;
-  font-size: 12px;
-  text-transform: uppercase;
-  color: var(--texto-fraco);
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--borda);
-}
-td { padding: 12px; border-bottom: 1px solid #262626; }
-
-label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--texto-fraco); }
-input, select {
-  padding: 9px 10px;
-  border-radius: 6px;
-  border: 1px solid var(--borda);
-  background: var(--cartao);
-  color: var(--texto);
-  font: inherit;
+  font-family: var(--font-mono);
   font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
 }
-
-button {
-  padding: 9px 16px;
-  border: 0;
+.lateral nav { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.lateral nav a,
+.lateral .tema {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  height: 42px;
+  padding: 0 13px;
   border-radius: 999px;
-  background: var(--destaque);
-  color: #000;
-  font: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
+  background: transparent;
+  color: var(--ink-3);
+  font-size: 13.5px;
+  font-weight: 560;
+  text-decoration: none;
+  box-shadow: none;
+  transition: background-color 0.34s var(--ease), color 0.2s;
 }
-button:disabled { background: var(--cartao); color: var(--texto-fraco); cursor: not-allowed; }
-button.secundario { background: transparent; color: var(--texto); border: 1px solid var(--texto); }
+.lateral nav a:hover,
+.lateral .tema:hover { background: var(--surface); color: var(--ink-2); opacity: 1; }
+.lateral nav a.active { background: var(--chip); color: var(--ink); }
 
+.conteudo {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 36px 28px 64px;
+  animation: entrar 0.28s var(--ease);
+}
+@keyframes entrar {
+  from { opacity: 0; transform: translateY(6px); }
+}
+.conteudo h2 { font-size: 26px; margin: 0 0 20px; }
+.conteudo h2 + .frase { margin-top: -12px; }
+.conteudo h3 { font-size: 17px; margin: 30px 0 10px; }
+
+/* Frase de abertura da tela, com os dados em chips. */
+.frase { margin: 0 0 12px; color: var(--ink-2); font-size: 16px; line-height: 1.8; }
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 9px;
+  border-radius: 8px;
+  background: var(--chip);
+  color: var(--ink);
+  font-size: 0.92em;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+.rodape {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 64px;
+  color: var(--ink-3);
+  font-size: 12.5px;
+}
+
+/* Celular: o painel vira uma cápsula flutuante no rodapé, só com os ícones;
+   o item da tela atual mostra o nome. */
+@media (max-width: 760px) {
+  .app { display: block; }
+  .lateral {
+    position: fixed;
+    top: auto;
+    left: 50%;
+    bottom: 16px;
+    z-index: 50;
+    transform: translateX(-50%);
+    flex-direction: row;
+    gap: 2px;
+    width: max-content;
+    height: auto;
+    margin: 0;
+    padding: 5px;
+    border-radius: 999px;
+  }
+  .lateral .marca { display: none; }
+  .lateral nav { flex-direction: row; }
+  .lateral nav a, .lateral .tema { justify-content: center; min-width: 46px; gap: 7px; }
+  .lateral nav a:not(.active) span, .lateral .tema span { display: none; }
+  .conteudo { padding: 24px 20px 120px; }
+}
+
+/* ---------- Botões ---------- */
+button, a.botao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--primary);
+  color: var(--primary-ink);
+  font: inherit;
+  font-size: 14.5px;
+  font-weight: 550;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 8px 20px -10px rgb(0 0 0 / 0.5);
+  transition: opacity 0.2s, transform 0.2s, background-color 0.2s;
+}
+button:hover, a.botao:hover { opacity: 0.9; }
+button:active { transform: scale(0.98); }
+button:disabled { opacity: 0.35; pointer-events: none; }
+
+button.secundario { background: var(--chip); color: var(--ink); box-shadow: none; }
+button.secundario:hover { background: var(--surface-2); opacity: 1; }
+button.pequeno { height: 36px; padding: 0 14px; border-radius: 10px; font-size: 13px; }
+button.icone {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-2);
+  box-shadow: none;
+}
+button.icone:hover { background: var(--surface); color: var(--ink); opacity: 1; }
+
+/* ---------- Campos ---------- */
+label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500; color: var(--ink-2); }
+input, select {
+  height: 42px;
+  width: 100%;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--chip);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14.5px;
+  outline: none;
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
+input:focus, select:focus { background: var(--card); box-shadow: 0 0 0 2px var(--ink); }
+input[aria-invalid='true'] { box-shadow: 0 0 0 1.5px var(--danger); }
+input::placeholder { color: var(--ink-3); }
+select { cursor: pointer; }
+/* Sem as setinhas do campo numérico. */
+input[type='number'] { appearance: textfield; -moz-appearance: textfield; }
+input[type='number']::-webkit-inner-spin-button { appearance: none; }
+
+/* Formulário em cartão. Os campos ficam em linha e quebram quando falta espaço. */
 .formulario {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 12px;
-  padding: 16px;
-  margin-bottom: 20px;
-  background: #1f1f1f;
-  border: 1px solid var(--borda);
-  border-radius: 8px;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px;
+  margin-bottom: 26px;
+  border-radius: 22px;
+  background: var(--card);
+  box-shadow: var(--elev-card);
 }
-
-.erro { color: var(--erro); margin: 8px 0; }
-.aviso { color: var(--aviso); margin: 8px 0; }
-.vazio { color: var(--texto-fraco); padding: 32px 0; text-align: center; }
-.resumo { color: var(--texto-fraco); font-size: 13px; font-weight: 400; margin: 0 0 8px; }
-
-.conteudo h3 { font-size: 18px; margin: 28px 0 8px; }
-.conteudo td a { color: var(--texto); }
-.conteudo td a:hover { color: var(--destaque); }
-
-/* Link com cara de botão (ex.: Exportar CSV) */
-a.botao {
-  display: inline-block;
-  padding: 9px 16px;
-  border-radius: 999px;
-  background: var(--destaque);
-  color: #000;
-  font-size: 14px;
-  font-weight: 600;
-  text-decoration: none;
-}
-
-/* Situação do empréstimo */
-.etiqueta {
-  display: inline-block;
-  padding: 2px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 600;
-}
-.etiqueta.ativo { background: rgba(30, 215, 96, 0.15); color: var(--destaque); }
-.etiqueta.devolvido { background: var(--cartao); color: var(--texto-fraco); }
-
-@media (max-width: 700px) {
-  .app { flex-direction: column; }
-  .menu { width: 100%; padding: 12px; }
-  .menu h1 { margin-bottom: 12px; }
-  .menu nav { flex-direction: row; flex-wrap: wrap; }
-  .conteudo { padding: 20px 16px; }
-}
-
-/* Acervo */
-.formulario .campo-largo { flex: 2; min-width: 200px; }
-.formulario { align-items: flex-start; }
-.formulario button { margin-top: 20px; }
-.formulario .campo-curto { width: 110px; }
-.formulario .campo-curto input { width: 100%; }
-.erro-campo { color: var(--erro); font-size: 12px; }
+.formulario label { flex: 1; min-width: 130px; }
+/* O botão de enviar desce para alinhar com os campos, que têm o rótulo em cima. */
+.formulario > button[type='submit'] { margin-top: 25px; }
+.frase + .formulario { margin-top: 20px; }
+.formulario .campo-largo { flex-basis: 100%; }
+.formulario .campo-curto { flex: 0 0 110px; min-width: 0; }
 .formulario .linha-inteira { flex-basis: 100%; margin: 0; }
-.barra { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 16px; margin-bottom: 16px; }
-.barra p { margin: 0 0 8px; }
-.sucesso { color: var(--destaque); margin: 8px 0; }
+.erro-campo { color: var(--danger); font-size: 12.5px; font-weight: 400; }
+
+/* Linha com um controle solto (ex.: escolher o leitor). */
+.barra { margin-bottom: 8px; }
+.barra label { max-width: 280px; }
+
+/* ---------- Mensagens ---------- */
+.mensagens { min-height: 30px; margin-bottom: 10px; }
+.mensagens p { margin: 0; }
+.erro, .aviso, .sucesso { display: flex; align-items: center; gap: 8px; margin: 8px 0; font-size: 14px; }
+.erro::before, .aviso::before, .sucesso::before {
+  content: '';
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: currentColor;
+}
+.erro, .aviso { color: var(--danger); }
+.sucesso { color: var(--up); }
+.resumo { margin: 0 0 8px; color: var(--ink-3); font-size: 13px; font-weight: 400; letter-spacing: 0; }
+
+/* Estado vazio: caixa tracejada. */
+.vazio {
+  display: grid;
+  place-items: center;
+  min-height: 112px;
+  margin: 0;
+  padding: 32px 24px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 18px;
+  color: var(--ink-2);
+  font-size: 14px;
+  text-align: center;
+}
+
+/* ---------- Listas com linhas finas ---------- */
+.lista { list-style: none; margin: 0; padding: 0; }
+.lista li {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 64px;
+  padding: 12px 4px;
+  border-bottom: 1px solid var(--line);
+}
+.lista li:last-child { border-bottom: 0; }
+.lista .principal { flex: 1; min-width: 0; }
+.lista .titulo { display: block; font-weight: 560; letter-spacing: -0.01em; }
+.lista .detalhe { display: block; color: var(--ink-3); font-size: 13px; }
+.lista .numero { color: var(--ink-2); font-size: 13.5px; white-space: nowrap; }
+.lista .numero.zerado { color: var(--danger); }
+.lista .acao { flex: none; width: 132px; display: flex; justify-content: flex-end; }
+
+/* Situação escrita no lugar do botão do acervo: "Com Ana", "Sem cópias". */
+.selo { display: inline-flex; align-items: center; gap: 7px; color: var(--ink-3); font-size: 13px; }
+.selo.com-leitor { color: var(--up); }
+.selo.com-leitor::before { content: ''; width: 7px; height: 7px; border-radius: 999px; background: currentColor; }
+
+/* Ranking */
+.lista .posicao { flex: none; width: 26px; color: var(--ink-3); font-size: 15px; }
+.lista li:first-child .posicao { color: var(--ink); font-weight: 650; }
+.barra-total { flex: none; width: 120px; height: 4px; border-radius: 999px; background: var(--chip); overflow: hidden; }
+.barra-total span { display: block; height: 100%; border-radius: 999px; background: var(--ink); }
+/* Largura fixa: as barras começam todas no mesmo ponto, com 1 ou com 12 empréstimos. */
+.lista .numero.total { flex: none; width: 128px; text-align: right; }
+
+/* ---------- Tabelas (linhas finas, sem caixa alta) ---------- */
+table { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+th { padding: 8px 4px; border-bottom: 1px solid var(--line-strong); color: var(--ink-3); font-size: 12.5px; font-weight: 500; text-align: left; }
+td { padding: 13px 4px; border-bottom: 1px solid var(--line); }
+td a { color: var(--ink); }
+td a:hover { color: var(--ink-2); }
+
+/* Situação do empréstimo (relatório e leitores) */
+.etiqueta { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 550; }
+.etiqueta.ativo { background: color-mix(in srgb, var(--up) 14%, transparent); color: var(--up); }
+.etiqueta.devolvido { background: var(--chip); color: var(--ink-2); }
+
+@media (max-width: 560px) {
+  .barra-total { display: none; }
+  .lista .acao { width: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .conteudo { animation: none; }
+  * { transition: none !important; }
+}

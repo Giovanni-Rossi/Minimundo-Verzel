@@ -88,6 +88,8 @@ export default function Acervo() {
     return ativos.some((e) => e.livro.id === livro.id && String(e.leitor.id) === leitorId)
   }
 
+  const nomeDoLeitor = leitores.find((l) => String(l.id) === leitorId)?.nome
+
   async function aoEmprestar(livro) {
     setMensagem('')
     if (!leitorId) {
@@ -102,8 +104,7 @@ export default function Acervo() {
     setEmprestandoId(livro.id)
     try {
       await emprestar(livro.id, leitorId)
-      const leitor = leitores.find((l) => String(l.id) === leitorId)
-      setMensagem(`"${livro.titulo}" emprestado para ${leitor?.nome ?? 'o leitor'}.`)
+      setMensagem(`"${livro.titulo}" emprestado para ${nomeDoLeitor}.`)
       setErroEmprestimo('')
     } catch (e) {
       // Ex.: "Livro sem cópias disponíveis." ou "Leitor já tem 3 empréstimos ativos."
@@ -113,14 +114,26 @@ export default function Acervo() {
     setEmprestandoId(null)
   }
 
+  const totalCopias = livros.reduce((soma, livro) => soma + livro.copiasDisponiveis, 0)
+
   return (
     <section>
       <h2>Acervo</h2>
+      {!carregando && !erroLista && (
+        <p className="frase">
+          Há <span className="chip">{livros.length} {livros.length === 1 ? 'livro' : 'livros'}</span> no
+          acervo, com{' '}
+          <span className="chip">
+            {totalCopias} {totalCopias === 1 ? 'cópia' : 'cópias'}
+          </span>{' '}
+          na estante agora.
+        </p>
+      )}
 
       <form className="formulario" onSubmit={handleSubmit(aoCadastrar)} noValidate>
         <label className="campo-largo">
           Título
-          <input {...register('titulo')} />
+          <input aria-invalid={Boolean(errors.titulo)} {...register('titulo')} />
           {errors.titulo && <span className="erro-campo">{errors.titulo.message}</span>}
         </label>
         <label>
@@ -129,12 +142,20 @@ export default function Acervo() {
         </label>
         <label className="campo-curto">
           Ano
-          <input type="number" {...register('ano', { valueAsNumber: true })} />
+          <input
+            type="number"
+            aria-invalid={Boolean(errors.ano)}
+            {...register('ano', { valueAsNumber: true })}
+          />
           {errors.ano && <span className="erro-campo">{errors.ano.message}</span>}
         </label>
         <label className="campo-curto">
           Cópias
-          <input type="number" {...register('copiasDisponiveis', { valueAsNumber: true })} />
+          <input
+            type="number"
+            aria-invalid={Boolean(errors.copiasDisponiveis)}
+            {...register('copiasDisponiveis', { valueAsNumber: true })}
+          />
           {errors.copiasDisponiveis && (
             <span className="erro-campo">{errors.copiasDisponiveis.message}</span>
           )}
@@ -151,7 +172,7 @@ export default function Acervo() {
 
       <div className="barra">
         <label>
-          Leitor que vai pegar o livro
+          Emprestar para
           <select value={leitorId} onChange={(e) => setLeitorId(e.target.value)}>
             <option value="">Escolha um leitor</option>
             {leitores.map((leitor) => (
@@ -161,6 +182,10 @@ export default function Acervo() {
             ))}
           </select>
         </label>
+      </div>
+
+      {/* Linha reservada para as mensagens: a lista não pula quando elas aparecem. */}
+      <div className="mensagens">
         {erroEmprestimo && (
           <p className="aviso" role="alert">
             {erroEmprestimo}
@@ -169,54 +194,48 @@ export default function Acervo() {
         {mensagem && <p className="sucesso">{mensagem}</p>}
       </div>
 
-      {carregando && <p className="vazio">Carregando...</p>}
+      {carregando && livros.length === 0 && <p className="vazio">Carregando...</p>}
       {erroLista && (
         <p className="erro" role="alert">
           {erroLista}
         </p>
       )}
       {!carregando && !erroLista && livros.length === 0 && (
-        <p className="vazio">Nenhum livro cadastrado ainda.</p>
+        <p className="vazio">Nenhum livro cadastrado ainda. Cadastre o primeiro acima.</p>
       )}
 
       {livros.length > 0 && (
-        <table>
-          <thead>
-            <tr>
-              <th>Título</th>
-              <th>Autor</th>
-              <th>Ano</th>
-              <th>Cópias</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {livros.map((livro) => (
-              <tr key={livro.id}>
-                <td>{livro.titulo}</td>
-                <td>{livro.autor}</td>
-                <td>{livro.ano}</td>
-                <td>{livro.copiasDisponiveis}</td>
-                <td>
+        <ul className="lista">
+          {livros.map((livro) => (
+            <li key={livro.id}>
+              <div className="principal">
+                <span className="titulo">{livro.titulo}</span>
+                <span className="detalhe">
+                  {livro.autor ? `${livro.autor} · ` : ''}
+                  <span className="mono">{livro.ano}</span>
+                </span>
+              </div>
+              <span className={`numero mono ${livro.copiasDisponiveis === 0 ? 'zerado' : ''}`}>
+                {livro.copiasDisponiveis} {livro.copiasDisponiveis === 1 ? 'cópia' : 'cópias'}
+              </span>
+              <div className="acao">
+                {leitorJaTem(livro) ? (
+                  <span className="selo com-leitor">Com {nomeDoLeitor}</span>
+                ) : livro.copiasDisponiveis === 0 ? (
+                  <span className="selo">Sem cópias</span>
+                ) : (
                   <button
+                    className="pequeno"
                     onClick={() => aoEmprestar(livro)}
-                    disabled={
-                      livro.copiasDisponiveis === 0 ||
-                      leitorJaTem(livro) ||
-                      emprestandoId === livro.id
-                    }
+                    disabled={emprestandoId === livro.id}
                   >
-                    {leitorJaTem(livro)
-                      ? 'Já está com o leitor'
-                      : livro.copiasDisponiveis === 0
-                        ? 'Indisponível'
-                        : 'Emprestar'}
+                    Emprestar
                   </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
       )}
     </section>
   )
