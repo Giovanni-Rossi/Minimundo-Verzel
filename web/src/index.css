@@ -104,7 +104,11 @@ button.secundario { background: transparent; color: var(--texto); border: 1px so
 
 /* Acervo */
 .formulario .campo-largo { flex: 2; min-width: 200px; }
-.formulario .campo-curto input { width: 90px; }
+.formulario { align-items: flex-start; }
+.formulario button { margin-top: 20px; }
+.formulario .campo-curto { width: 110px; }
+.formulario .campo-curto input { width: 100%; }
+.erro-campo { color: var(--erro); font-size: 12px; }
 .formulario .linha-inteira { flex-basis: 100%; margin: 0; }
 .barra { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 16px; margin-bottom: 16px; }
 .barra p { margin: 0 0 8px; }

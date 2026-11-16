@@ -1,20 +1,10 @@
 // BIBL-1: cadastrar e listar livros.
 // BIBL-2 (parte de emprestar): escolher o leitor e clicar em Emprestar.
 import { useEffect, useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { cadastrarLivro, emprestar, listarLeitores, listarLivros } from '../api.js'
-
-const FORMULARIO_VAZIO = { titulo: '', autor: '', ano: '', copiasDisponiveis: '' }
-
-// Checagem rápida antes de enviar. Quem decide de verdade é a API:
-// se ela recusar, a mensagem dela também aparece na tela.
-function validar(form) {
-  if (!form.titulo.trim()) return 'Título é obrigatório.'
-  if (form.ano === '') return 'Ano é obrigatório.'
-  if (Number(form.ano) > new Date().getFullYear()) return 'Ano não pode ser no futuro.'
-  if (form.copiasDisponiveis === '') return 'Quantidade de cópias é obrigatória.'
-  if (Number(form.copiasDisponiveis) < 0) return 'Cópias não podem ser negativas.'
-  return ''
-}
+import { livroSchema } from '../schemas/livro.js'
 
 export default function Acervo() {
   // Dados que vêm da API
@@ -23,10 +13,18 @@ export default function Acervo() {
   const [carregando, setCarregando] = useState(true)
   const [erroLista, setErroLista] = useState('')
 
-  // Formulário de cadastro
-  const [form, setForm] = useState(FORMULARIO_VAZIO)
-  const [erroCadastro, setErroCadastro] = useState('')
-  const [salvando, setSalvando] = useState(false)
+  // Formulário de cadastro: o react-hook-form guarda os valores e os erros,
+  // e o zod (livroSchema) confere as regras antes de enviar.
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    resolver: zodResolver(livroSchema),
+    defaultValues: { titulo: '', autor: '', ano: '', copiasDisponiveis: '' },
+  })
 
   // Empréstimo
   const [leitorId, setLeitorId] = useState('')
@@ -58,34 +56,17 @@ export default function Acervo() {
     carregarTudo()
   }, [])
 
-  function mudarCampo(evento) {
-    setForm({ ...form, [evento.target.name]: evento.target.value })
-  }
-
-  async function aoCadastrar(evento) {
-    evento.preventDefault() // não deixa o navegador recarregar a página
-
-    const problema = validar(form)
-    if (problema) {
-      setErroCadastro(problema)
-      return
-    }
-
-    setSalvando(true)
+  // Só é chamada se o formulário passou nas regras do livroSchema.
+  // "livro" já vem pronto: título sem espaços sobrando e números como número.
+  async function aoCadastrar(livro) {
     try {
-      await cadastrarLivro({
-        titulo: form.titulo.trim(),
-        autor: form.autor.trim(),
-        ano: Number(form.ano),
-        copiasDisponiveis: Number(form.copiasDisponiveis),
-      })
-      setForm(FORMULARIO_VAZIO)
-      setErroCadastro('')
+      await cadastrarLivro(livro)
+      reset() // limpa o formulário
       await carregarLivros() // o livro novo aparece sem recarregar a página
     } catch (e) {
-      setErroCadastro(e.message)
+      // A API recusou: mostra a mensagem dela abaixo do formulário.
+      setError('root', { message: e.message })
     }
-    setSalvando(false)
   }
 
   async function aoEmprestar(livro) {
@@ -113,34 +94,34 @@ export default function Acervo() {
     <section>
       <h2>Acervo</h2>
 
-      <form className="formulario" onSubmit={aoCadastrar} noValidate>
+      <form className="formulario" onSubmit={handleSubmit(aoCadastrar)} noValidate>
         <label className="campo-largo">
           Título
-          <input name="titulo" value={form.titulo} onChange={mudarCampo} />
+          <input {...register('titulo')} />
+          {errors.titulo && <span className="erro-campo">{errors.titulo.message}</span>}
         </label>
         <label>
           Autor
-          <input name="autor" value={form.autor} onChange={mudarCampo} />
+          <input {...register('autor')} />
         </label>
         <label className="campo-curto">
           Ano
-          <input name="ano" type="number" value={form.ano} onChange={mudarCampo} />
+          <input type="number" {...register('ano', { valueAsNumber: true })} />
+          {errors.ano && <span className="erro-campo">{errors.ano.message}</span>}
         </label>
         <label className="campo-curto">
           Cópias
-          <input
-            name="copiasDisponiveis"
-            type="number"
-            value={form.copiasDisponiveis}
-            onChange={mudarCampo}
-          />
+          <input type="number" {...register('copiasDisponiveis', { valueAsNumber: true })} />
+          {errors.copiasDisponiveis && (
+            <span className="erro-campo">{errors.copiasDisponiveis.message}</span>
+          )}
         </label>
-        <button type="submit" disabled={salvando}>
-          {salvando ? 'Salvando...' : 'Cadastrar'}
+        <button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? 'Salvando...' : 'Cadastrar'}
         </button>
-        {erroCadastro && (
+        {errors.root && (
           <p className="erro linha-inteira" role="alert">
-            {erroCadastro}
+            {errors.root.message}
           </p>
         )}
       </form>
