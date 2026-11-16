@@ -121,5 +121,7 @@ A aplicação abre em `http://localhost:5173`. Por padrão ela procura a API em 
 | `src/pages/Emprestimos.jsx` | BIBL-2                                                         |
 | `src/pages/Ranking.jsx`     | BIBL-3                                                         |
 | `src/pages/Relatorio.jsx`   | BIBL-4 e BIBL-5                                                |
+| `src/pages/Leitores.jsx`    | Histórico de cada leitor (empréstimos ativos e devolvidos)     |
+| `src/formatar.js`           | Formatação de datas e situação para exibir nas telas           |
 
 Cada tela mora no seu próprio arquivo, para duas pessoas trabalharem sem conflito. As telas não usam `fetch` direto: chamam as funções de `api.js`, que lançam um erro com a mensagem da API quando ela recusa o pedido.
