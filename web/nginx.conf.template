@@ -1,0 +1,20 @@
+server {
+  listen ${PORT};
+  root /usr/share/nginx/html;
+  index index.html;
+
+  gzip on;
+  gzip_types text/css application/javascript application/json image/svg+xml;
+
+  # Arquivos com hash no nome: podem ficar em cache por muito tempo.
+  location /assets/ {
+    try_files $uri =404;
+    add_header Cache-Control "public, max-age=31536000, immutable";
+  }
+
+  # Rotas do React Router (/acervo, /emprestimos...) caem no index.html.
+  location / {
+    try_files $uri $uri/ /index.html;
+    add_header Cache-Control "no-cache";
+  }
+}
