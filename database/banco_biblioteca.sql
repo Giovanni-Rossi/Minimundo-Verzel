@@ -94,3 +94,47 @@ UPDATE livros SET copias_disponiveis = copias_disponiveis - 1 WHERE id IN (1, 2,
 -- Bruno com 1 empréstimo já DEVOLVIDO (histórico)
 INSERT INTO emprestimos (livro_id, leitor_id, status, data_emprestimo, data_devolucao)
 VALUES (1, 2, 'DEVOLVIDO', now() - interval '10 days', now() - interval '3 days');
+
+-- -------------------------------------------------------------
+-- 6. TRIGGER · regras de empréstimo garantidas pelo banco (BIBL-2)
+--   a) só usuário com perfil 'leitor' pega livro
+--   b) no máximo 3 empréstimos ATIVOS por leitor
+-- CHECK não enxerga outras linhas, por isso é um trigger.
+-- O FOR UPDATE trava o usuário: dois empréstimos ao mesmo tempo do mesmo leitor
+-- esperam um pelo outro e não passam juntos do limite.
+-- A API confere antes para dar a mensagem certa; o trigger é a rede de segurança.
+-- Usa o índice idx_emprestimos_leitor_status para contar os ativos.
+-- -------------------------------------------------------------
+CREATE OR REPLACE FUNCTION verificar_regras_emprestimo() RETURNS trigger AS $$
+DECLARE
+  perfil_atual perfil_usuario;
+  ativos       INT;
+BEGIN
+  -- só empréstimo ATIVO conta para as regras; gravar um DEVOLVIDO (histórico) passa direto
+  IF NEW.status <> 'ATIVO' THEN
+    RETURN NEW;
+  END IF;
+
+  SELECT perfil INTO perfil_atual FROM usuarios WHERE id = NEW.leitor_id FOR UPDATE;
+
+  IF perfil_atual <> 'leitor' THEN
+    RAISE EXCEPTION 'Só usuários com perfil leitor podem pegar livros.'
+      USING ERRCODE = 'check_violation', CONSTRAINT = 'emprestimo_somente_leitor';
+  END IF;
+
+  SELECT count(*) INTO ativos
+  FROM emprestimos
+  WHERE leitor_id = NEW.leitor_id AND status = 'ATIVO' AND id <> NEW.id;
+
+  IF ativos >= 3 THEN
+    RAISE EXCEPTION 'O leitor já tem 3 empréstimos ativos.'
+      USING ERRCODE = 'check_violation', CONSTRAINT = 'limite_emprestimos_ativos';
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE TRIGGER regras_emprestimo
+BEFORE INSERT OR UPDATE OF leitor_id, status ON emprestimos
+FOR EACH ROW EXECUTE FUNCTION verificar_regras_emprestimo();
