@@ -1,0 +1,290 @@
+openapi: 3.1.0
+info:
+  title: API Biblioteca Comunitária (Minimundo Verzel)
+  version: 1.0.0
+  description: |
+    Contrato combinado ANTES do código. Front faz mock a partir dele; back (FastAPI) implementa igual.
+    Regras: erro sempre no formato {"erro": "mensagem para mostrar na tela"}.
+    Datas em ISO 8601. Filtros "inicio" e "fim" no formato AAAA-MM-DD, "fim" inclusivo.
+servers:
+  - url: http://localhost:8000
+    description: FastAPI local (uvicorn)
+
+tags:
+  - name: Livros
+    description: BIBL-1 cadastro/listagem e BIBL-3 ranking
+  - name: Leitores
+  - name: Empréstimos
+    description: BIBL-2 empréstimo/devolução, BIBL-4 relatório, BIBL-5 CSV
+
+paths:
+  /livros:
+    get:
+      tags: [Livros]
+      summary: Listar o acervo (BIBL-1)
+      operationId: listarLivros
+      responses:
+        "200":
+          description: Lista de livros (vazia = [])
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Livro" }
+    post:
+      tags: [Livros]
+      summary: Cadastrar livro (BIBL-1)
+      operationId: cadastrarLivro
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LivroNovo" }
+      responses:
+        "201":
+          description: Livro criado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Livro" }
+        "400":
+          description: |
+            Validação. Mensagens possíveis:
+            "Título é obrigatório." | "Ano não pode ser no futuro." | "Cópias não podem ser negativas."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Erro" }
+              example: { erro: "Ano não pode ser no futuro." }
+
+  /livros/ranking:
+    get:
+      tags: [Livros]
+      summary: Ranking dos mais emprestados (BIBL-3)
+      operationId: rankingLivros
+      responses:
+        "200":
+          description: Ordenado do maior total para o menor. Nenhum empréstimo = [].
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ItemRanking" }
+
+  /leitores:
+    get:
+      tags: [Leitores]
+      summary: Listar leitores (semeados no banco)
+      operationId: listarLeitores
+      responses:
+        "200":
+          description: Lista de leitores
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Leitor" }
+
+  /emprestimos:
+    get:
+      tags: [Empréstimos]
+      summary: Relatório de empréstimos com filtros combináveis (BIBL-4)
+      operationId: relatorioEmprestimos
+      parameters:
+        - $ref: "#/components/parameters/LeitorId"
+        - $ref: "#/components/parameters/Inicio"
+        - $ref: "#/components/parameters/Fim"
+        - $ref: "#/components/parameters/Situacao"
+      responses:
+        "200":
+          description: Empréstimos que atendem a TODOS os filtros. Nenhum = [] (sem erro).
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Emprestimo" }
+        "400":
+          description: "Filtro inválido (ex.: data mal formatada, inicio depois de fim)"
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Erro" }
+    post:
+      tags: [Empréstimos]
+      summary: Emprestar livro (BIBL-2)
+      description: Diminui copiasDisponiveis do livro em 1. Operação atômica (transação).
+      operationId: emprestarLivro
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EmprestimoNovo" }
+      responses:
+        "201":
+          description: Empréstimo registrado (situacao "ativo")
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Emprestimo" }
+        "404":
+          description: '"Livro não encontrado." | "Leitor não encontrado."'
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Erro" }
+        "409":
+          description: '"Livro sem cópias disponíveis." | "Leitor já tem 3 empréstimos ativos."'
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Erro" }
+              example: { erro: "Leitor já tem 3 empréstimos ativos." }
+
+  /emprestimos/{id}/devolucao:
+    post:
+      tags: [Empréstimos]
+      summary: Devolver livro (BIBL-2)
+      description: Encerra o empréstimo e aumenta copiasDisponiveis em 1. Devolver de novo não soma.
+      operationId: devolverLivro
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer, minimum: 1 }
+      responses:
+        "200":
+          description: Empréstimo devolvido (situacao "devolvido")
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Emprestimo" }
+        "404":
+          description: '"Empréstimo não encontrado."'
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Erro" }
+        "409":
+          description: '"Empréstimo já devolvido."'
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Erro" }
+
+  /emprestimos/export.csv:
+    get:
+      tags: [Empréstimos]
+      summary: Exportar relatório em CSV (BIBL-5)
+      description: |
+        Mesmos filtros e mesmo resultado do GET /emprestimos.
+        Cabeçalho: livro,leitor,data,situacao. Sem resultados = só o cabeçalho. UTF-8 com BOM.
+      operationId: exportarEmprestimosCsv
+      parameters:
+        - $ref: "#/components/parameters/LeitorId"
+        - $ref: "#/components/parameters/Inicio"
+        - $ref: "#/components/parameters/Fim"
+        - $ref: "#/components/parameters/Situacao"
+      responses:
+        "200":
+          description: Arquivo CSV
+          headers:
+            Content-Disposition:
+              schema: { type: string, example: 'attachment; filename="emprestimos.csv"' }
+          content:
+            text/csv:
+              schema: { type: string }
+              example: |
+                livro,leitor,data,situacao
+                Dom Casmurro,Ana,2026-11-16,ativo
+        "400":
+          description: Filtro inválido
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Erro" }
+
+components:
+  parameters:
+    LeitorId:
+      name: leitorId
+      in: query
+      required: false
+      schema: { type: integer, minimum: 1 }
+    Inicio:
+      name: inicio
+      in: query
+      required: false
+      description: Data inicial (inclusiva), AAAA-MM-DD
+      schema: { type: string, format: date, example: "2026-11-01" }
+    Fim:
+      name: fim
+      in: query
+      required: false
+      description: Data final (inclusiva), AAAA-MM-DD
+      schema: { type: string, format: date, example: "2026-11-30" }
+    Situacao:
+      name: situacao
+      in: query
+      required: false
+      schema: { $ref: "#/components/schemas/Situacao" }
+
+  schemas:
+    Erro:
+      type: object
+      required: [erro]
+      properties:
+        erro: { type: string, example: "Livro sem cópias disponíveis." }
+
+    Situacao:
+      type: string
+      enum: [ativo, devolvido]
+
+    LivroNovo:
+      type: object
+      required: [titulo, autor, ano, copiasDisponiveis]
+      properties:
+        titulo: { type: string, minLength: 1, example: "Dom Casmurro" }
+        autor: { type: string, example: "Machado de Assis" }
+        ano: { type: integer, description: "Não pode ser maior que o ano atual", example: 1899 }
+        copiasDisponiveis: { type: integer, minimum: 0, example: 3 }
+
+    Livro:
+      allOf:
+        - type: object
+          required: [id]
+          properties:
+            id: { type: integer, example: 1 }
+        - $ref: "#/components/schemas/LivroNovo"
+
+    Leitor:
+      type: object
+      required: [id, nome]
+      properties:
+        id: { type: integer, example: 1 }
+        nome: { type: string, example: "Ana" }
+
+    LivroResumo:
+      type: object
+      required: [id, titulo]
+      properties:
+        id: { type: integer, example: 1 }
+        titulo: { type: string, example: "Dom Casmurro" }
+
+    EmprestimoNovo:
+      type: object
+      required: [livroId, leitorId]
+      properties:
+        livroId: { type: integer, minimum: 1, example: 1 }
+        leitorId: { type: integer, minimum: 1, example: 1 }
+
+    Emprestimo:
+      type: object
+      required: [id, livro, leitor, dataEmprestimo, dataDevolucao, situacao]
+      properties:
+        id: { type: integer, example: 10 }
+        livro: { $ref: "#/components/schemas/LivroResumo" }
+        leitor: { $ref: "#/components/schemas/Leitor" }
+        dataEmprestimo: { type: string, format: date-time, example: "2026-11-16T19:30:00Z" }
+        dataDevolucao:
+          type: [string, "null"]
+          format: date-time
+          example: null
+        situacao: { $ref: "#/components/schemas/Situacao" }
+
+    ItemRanking:
+      type: object
+      required: [livroId, titulo, totalEmprestimos]
+      properties:
+        livroId: { type: integer, example: 1 }
+        titulo: { type: string, example: "Dom Casmurro" }
+        totalEmprestimos: { type: integer, minimum: 1, example: 5 }
