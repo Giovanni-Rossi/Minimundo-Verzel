@@ -1,12 +1,15 @@
+from datetime import datetime
+from itertools import count
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.core.database import Base, get_db
 from app.main import app
-from app.models import LeitorModel, LivroModel, PerfilUsuario
+from app.models import EmprestimoModel, LeitorModel, LivroModel, PerfilUsuario, Situacao
 
 engine_teste = create_engine(
     "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
@@ -62,3 +65,47 @@ def novo_livro(db):
         return livro
 
     return criar
+
+
+class CriadorDeDados:
+    """Insere dados direto no banco de teste, sem depender das rotas de outras histórias."""
+
+    def __init__(self, db: Session):
+        self.db = db
+        self._emails = count(1)
+
+    def livro(self, titulo: str, copias: int = 3) -> LivroModel:
+        livro = LivroModel(titulo=titulo, autor="Autor", ano=2000, copias_disponiveis=copias)
+        return self._salvar(livro)
+
+    def leitor(self, nome: str) -> LeitorModel:
+        # email e senha_hash são obrigatórios no banco real; aqui só precisam ser válidos.
+        email = f"leitor{next(self._emails)}@teste.com"
+        return self._salvar(LeitorModel(nome=nome, email=email, senha_hash="!"))
+
+    def emprestimo(
+        self,
+        livro: LivroModel,
+        leitor: LeitorModel,
+        em: datetime,
+        devolvido_em: datetime | None = None,
+    ) -> EmprestimoModel:
+        emprestimo = EmprestimoModel(
+            livro_id=livro.id,
+            leitor_id=leitor.id,
+            data_emprestimo=em,
+            data_devolucao=devolvido_em,
+            situacao=Situacao.DEVOLVIDO if devolvido_em else Situacao.ATIVO,
+        )
+        return self._salvar(emprestimo)
+
+    def _salvar(self, objeto):
+        self.db.add(objeto)
+        self.db.commit()
+        return objeto
+
+
+@pytest.fixture
+def criar(db) -> CriadorDeDados:
+    """Atalho para montar o cenário do teste: criar.livro(...), criar.leitor(...), criar.emprestimo(...)."""
+    return CriadorDeDados(db)
