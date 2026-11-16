@@ -11,7 +11,10 @@ class LeitorService:
         self.db = db
 
     def listar_leitores(self) -> list[LeitorModel]:
-        """GET /leitores. Só usuários com perfil leitor; bibliotecários ficam de fora."""
+        """GET /leitores. Ordenados por id; sem leitores = [].
+
+        Só usuários com perfil leitor; bibliotecários ficam de fora.
+        """
         consulta = (
             select(LeitorModel)
             .where(LeitorModel.perfil == PerfilUsuario.LEITOR)
