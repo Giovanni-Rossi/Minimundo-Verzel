@@ -1,6 +1,23 @@
 # Minimundo-Verzel
 
-Sistema de controle de acervo para a **Biblioteca Comunitária** do bairro.
+Sistema de controle de acervo para a **Biblioteca Comunitária** do bairro: catálogo de livros,
+empréstimos e devoluções, ranking dos mais procurados e relatório com exportação em CSV.
+
+**No ar:** https://biblioteca-comunitaria.duckdns.org · API: `/api` · Swagger: `/api/docs`
+
+| Parte | Tecnologia | Documentação |
+|---|---|---|
+| Front-end (`web/`) | React 19 + Vite | [web/README.md](web/README.md) |
+| API (`api/`) | Python 3.12 + FastAPI + SQLAlchemy | [api/README.md](api/README.md) |
+| Banco (`database/`) | PostgreSQL | [database/README.md](database/README.md) |
+| Contrato (`openapi-biblioteca.yaml`) | OpenAPI 3.1 | [docs/API.md](docs/API.md) |
+
+| Documento | Conteúdo |
+|---|---|
+| [docs/ARQUITETURA.md](docs/ARQUITETURA.md) | Camadas, fluxo de uma requisição, decisões e trade-offs |
+| [docs/BANCO.md](docs/BANCO.md) | Schema: diagrama, tabelas, regras, trigger, view e índices |
+| [docs/API.md](docs/API.md) | Rotas, formatos, mensagens de erro e exemplos |
+| [docs/DEPLOY.md](docs/DEPLOY.md) | Publicação na VPS (Docker Compose + Caddy) e no Dokploy |
 
 ## Sumário
 
@@ -12,6 +29,10 @@ Sistema de controle de acervo para a **Biblioteca Comunitária** do bairro.
   - [BIBL-3 — Ranking de livros mais emprestados](#bibl-3--ranking-de-livros-mais-emprestados)
   - [BIBL-4 — Relatório de empréstimos](#bibl-4--relatório-de-empréstimos)
   - [BIBL-5 — Exportação do relatório de empréstimos](#bibl-5--exportação-do-relatório-de-empréstimos)
+- [Visão da solução](#visão-da-solução)
+- [Como rodar localmente](#como-rodar-localmente)
+- [Estrutura do repositório](#estrutura-do-repositório)
+- [Comportamentos a conhecer](#comportamentos-a-conhecer)
 
 ## O minimundo
 
@@ -40,12 +61,12 @@ Um livro possui título, autor, ano de publicação e quantidade de cópias disp
 
 **Critérios de aceite**
 
-- [ ] É possível cadastrar um livro com título, autor, ano e quantidade de cópias.
-- [ ] Após o cadastro, o livro aparece na listagem sem recarregar a página manualmente.
-- [ ] A tela principal exibe a lista de livros com seus dados.
-- [ ] Cadastro com título vazio é recusado e a mensagem de erro é exibida na tela.
-- [ ] Cadastro com ano no futuro é recusado e a mensagem de erro é exibida na tela.
-- [ ] Cadastro com quantidade de cópias negativa é recusado e a mensagem de erro é exibida na tela.
+- [x] É possível cadastrar um livro com título, autor, ano e quantidade de cópias.
+- [x] Após o cadastro, o livro aparece na listagem sem recarregar a página manualmente.
+- [x] A tela principal exibe a lista de livros com seus dados.
+- [x] Cadastro com título vazio é recusado e a mensagem de erro é exibida na tela.
+- [x] Cadastro com ano no futuro é recusado e a mensagem de erro é exibida na tela.
+- [x] Cadastro com quantidade de cópias negativa é recusado e a mensagem de erro é exibida na tela.
 
 ### BIBL-2 — Empréstimo e devolução de livros
 
@@ -55,11 +76,11 @@ Ao emprestar, a quantidade de cópias disponíveis do livro diminui em 1. Ao dev
 
 **Critérios de aceite**
 
-- [ ] Emprestar um livro com cópia disponível registra o empréstimo e diminui as cópias em 1.
-- [ ] A tela reflete a nova quantidade de cópias após o empréstimo.
-- [ ] Emprestar um livro com 0 cópias disponíveis é recusado e o usuário é avisado na tela.
-- [ ] Devolver um livro emprestado encerra o empréstimo e aumenta as cópias em 1.
-- [ ] Um usuário com 3 empréstimos ativos é impedido de emprestar um quarto livro e é avisado do limite na tela.
+- [x] Emprestar um livro com cópia disponível registra o empréstimo e diminui as cópias em 1.
+- [x] A tela reflete a nova quantidade de cópias após o empréstimo.
+- [x] Emprestar um livro com 0 cópias disponíveis é recusado e o usuário é avisado na tela.
+- [x] Devolver um livro emprestado encerra o empréstimo e aumenta as cópias em 1.
+- [x] Um usuário com 3 empréstimos ativos é impedido de emprestar um quarto livro e é avisado do limite na tela.
 
 ### BIBL-3 — Ranking de livros mais emprestados
 
@@ -67,9 +88,9 @@ Ao emprestar, a quantidade de cópias disponíveis do livro diminui em 1. Ao dev
 
 **Critérios de aceite**
 
-- [ ] A visão de ranking exibe os livros ordenados pela quantidade de empréstimos.
-- [ ] Cada item mostra o total de vezes que o livro foi emprestado.
-- [ ] Quando nenhum livro foi emprestado ainda, a tela exibe um estado vazio tratado, sem erro.
+- [x] A visão de ranking exibe os livros ordenados pela quantidade de empréstimos.
+- [x] Cada item mostra o total de vezes que o livro foi emprestado.
+- [x] Quando nenhum livro foi emprestado ainda, a tela exibe um estado vazio tratado, sem erro.
 
 ### BIBL-4 — Relatório de empréstimos
 
@@ -77,12 +98,12 @@ Ao emprestar, a quantidade de cópias disponíveis do livro diminui em 1. Ao dev
 
 **Critérios de aceite**
 
-- [ ] O relatório lista os empréstimos com o livro, o usuário, a data e a situação (ativo ou devolvido).
-- [ ] É possível filtrar os empréstimos por usuário.
-- [ ] É possível filtrar os empréstimos por período (data inicial e final).
-- [ ] É possível filtrar os empréstimos por situação (ativo ou devolvido).
-- [ ] Os filtros podem ser combinados e o relatório reflete todos os critérios aplicados ao mesmo tempo.
-- [ ] Quando nenhum empréstimo atende aos filtros, a tela exibe um estado vazio tratado, sem erro.
+- [x] O relatório lista os empréstimos com o livro, o usuário, a data e a situação (ativo ou devolvido).
+- [x] É possível filtrar os empréstimos por usuário.
+- [x] É possível filtrar os empréstimos por período (data inicial e final).
+- [x] É possível filtrar os empréstimos por situação (ativo ou devolvido).
+- [x] Os filtros podem ser combinados e o relatório reflete todos os critérios aplicados ao mesmo tempo.
+- [x] Quando nenhum empréstimo atende aos filtros, a tela exibe um estado vazio tratado, sem erro.
 
 ### BIBL-5 — Exportação do relatório de empréstimos
 
@@ -90,43 +111,77 @@ Ao emprestar, a quantidade de cópias disponíveis do livro diminui em 1. Ao dev
 
 **Critérios de aceite**
 
-- [ ] É possível acionar, a partir do relatório, a exportação em formato CSV.
-- [ ] O arquivo exportado contém uma linha por empréstimo com o livro, o usuário, a data e a situação.
-- [ ] O arquivo inclui uma linha de cabeçalho identificando as colunas.
-- [ ] A exportação reflete o mesmo conjunto de empréstimos atualmente filtrado no relatório.
-- [ ] Exportar um relatório sem resultados gera um arquivo apenas com o cabeçalho, sem erro.
+- [x] É possível acionar, a partir do relatório, a exportação em formato CSV.
+- [x] O arquivo exportado contém uma linha por empréstimo com o livro, o usuário, a data e a situação.
+- [x] O arquivo inclui uma linha de cabeçalho identificando as colunas.
+- [x] A exportação reflete o mesmo conjunto de empréstimos atualmente filtrado no relatório.
+- [x] Exportar um relatório sem resultados gera um arquivo apenas com o cabeçalho, sem erro.
 
-## Front-end (`web/`)
+## Visão da solução
 
-Feito em React + Vite, com `react-router-dom` para a navegação entre as telas.
-
-**Como rodar**
-
-```bash
-cd web
-npm install
-npm run dev
+```
+Navegador ──HTTPS──▶ Front-end (React) ──JSON / contrato OpenAPI──▶ API (FastAPI) ──▶ PostgreSQL
 ```
 
-A aplicação abre em `http://localhost:5173`. Por padrão ela procura a API em `http://localhost:8000`; para mudar, copie `web/.env.example` para `web/.env` e ajuste `VITE_API_URL`.
+- **Contrato primeiro:** o `openapi-biblioteca.yaml` foi combinado antes do código; front, API e
+  banco foram feitos em paralelo sobre ele.
+- **API em camadas:** rotas → services (regras) → models (tabelas). As regras não dependem do
+  framework nem do banco.
+- **Consistência do estoque:** empréstimo e devolução em uma transação, com as linhas travadas
+  (`FOR UPDATE`); o banco reforça com `CHECK` e trigger (limite de 3, cópias ≥ 0).
+- **Visões como consultas:** ranking, relatório e CSV são calculados a partir dos empréstimos;
+  o CSV usa a mesma consulta do relatório.
+- **56 testes automatizados** na API cobrindo os critérios de aceite de todas as histórias.
 
-**Onde fica cada coisa**
+Detalhes e trade-offs em [docs/ARQUITETURA.md](docs/ARQUITETURA.md).
 
-| Arquivo                     | O que é                                                        |
-| --------------------------- | -------------------------------------------------------------- |
-| `src/App.jsx`               | Menu lateral e rotas das telas                                 |
-| `src/api.js`                | Único arquivo que conversa com a API, conforme o contrato OpenAPI |
-| `src/index.css`             | Estilos compartilhados (tabela, formulário, botões, erro)      |
-| `src/pages/Acervo.jsx`      | BIBL-1                                                         |
-| `src/pages/Emprestimos.jsx` | BIBL-2                                                         |
-| `src/pages/Ranking.jsx`     | BIBL-3                                                         |
-| `src/pages/Relatorio.jsx`   | BIBL-4 e BIBL-5                                                |
-| `src/pages/Leitores.jsx`    | Histórico de cada leitor (empréstimos ativos e devolvidos)     |
-| `src/formatar.js`           | Formatação de datas e situação para exibir nas telas           |
-| `src/mock.js`               | Dados fixos que imitam a API, usados quando `VITE_MOCK=true`   |
+## Como rodar localmente
 
-**Rodar sem o back-end**
+Pré-requisitos: Python 3.12+, Node 20+ e, opcionalmente, Docker para o Postgres.
 
-Crie `web/.env.local` com `VITE_MOCK=true` e rode `npm run dev`. O `api.js` passa a responder com os dados fixos de `src/mock.js` (mesmas regras e mensagens do contrato, inclusive o CSV). Os dados ficam em memória: recarregar a página volta ao estado inicial. Apague a linha (ou use `false`) para voltar a usar a API.
+```bash
+# 1. API (usa SQLite local por padrão, sem precisar de banco)
+cd api
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements-dev.txt
+cp .env.example .env
+uvicorn app.main:app --reload        # http://localhost:8000/docs
+pytest                               # 56 testes
 
-Cada tela mora no seu próprio arquivo, para duas pessoas trabalharem sem conflito. As telas não usam `fetch` direto: chamam as funções de `api.js`, que lançam um erro com a mensagem da API quando ela recusa o pedido.
+# 2. Front (em outro terminal)
+cd web
+npm install
+npm run dev                          # http://localhost:5173
+```
+
+Para usar o PostgreSQL com o schema do time, veja [database/README.md](database/README.md) e
+configure `DATABASE_URL` e `CRIAR_TABELAS=false` no `api/.env`.
+Publicação: [docs/DEPLOY.md](docs/DEPLOY.md).
+
+## Estrutura do repositório
+
+```
+api/                     API FastAPI (rotas, services, models, schemas, testes)
+web/                     Front-end React + Vite
+database/                Script do banco PostgreSQL e testes das regras do banco
+docs/                    Arquitetura, banco, API e deploy
+openapi-biblioteca.yaml  Contrato da API (fonte da verdade entre front e back)
+script-bd/               Versão anterior dos testes do banco (use database/testes.sql)
+```
+
+## Comportamentos a conhecer
+
+- **Sem login.** As histórias não pedem autenticação: o leitor é escolhido numa lista e qualquer
+  pessoa com o link usa o sistema.
+- **Bibliotecário não pega livro.** Usuários com perfil `bibliotecario` não aparecem em
+  `/leitores`; um empréstimo para eles responde 404 `Leitor não encontrado.`.
+- **Datas no fuso do servidor (UTC).** Os filtros de período e a data do CSV usam o dia em UTC.
+  Um empréstimo feito depois das 21h (horário de Brasília) conta como do dia seguinte.
+- **Ranking só com livros emprestados.** Livro que nunca foi emprestado não aparece no ranking.
+- **Ano no futuro** é validado pela API; o banco não tem essa regra.
+- **Trigger do banco como rede de segurança.** A API confere o limite de 3 e o perfil antes de
+  gravar; se mesmo assim o banco recusar, a resposta é um erro genérico, sem mensagem específica.
+- **Banco local da API:** com `CRIAR_TABELAS=true` (SQLite) a API cria as tabelas e semeia os
+  leitores Ana, Bruno e Carla; os dados de exemplo do PostgreSQL são outros (veja
+  [database/README.md](database/README.md)).
+- **Script do banco roda uma vez:** `database/banco_biblioteca.sql` não usa `IF NOT EXISTS`.

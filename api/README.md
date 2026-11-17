@@ -60,7 +60,19 @@ docker run --rm -p 8000:8000 -e CRIAR_TABELAS=true biblioteca-api   # SQLite den
 pytest
 ```
 Os testes usam um banco em memória criado a partir dos models, zerado a cada teste
-(`tests/conftest.py`). As fixtures `novo_leitor` e `novo_livro` criam os dados de cada teste.
+(`tests/conftest.py`). As fixtures `novo_leitor` e `novo_livro` criam os dados de cada teste, e
+`criar` monta cenários com empréstimos em datas e situações diferentes
+(`criar.livro(...)`, `criar.leitor(...)`, `criar.emprestimo(livro, leitor, em=..., devolvido_em=...)`).
+
+| Arquivo | O que testa |
+|---|---|
+| `test_contrato.py` | Rotas, `operationId` e schemas iguais ao contrato |
+| `test_livros.py` | BIBL-1 |
+| `test_emprestimos.py` | BIBL-2 |
+| `test_ranking.py` | BIBL-3 |
+| `test_relatorio.py` | BIBL-4 |
+| `test_exportar_csv.py` | BIBL-5 |
+| `test_leitores.py` | Listagem de leitores |
 `tests/test_contrato.py` falha se alguma rota ou schema sair do nome do contrato.
 
 ## Estrutura
@@ -90,17 +102,27 @@ O banco exige que `status` e `data_devolucao` andem juntos (ATIVO sem data, DEVO
 Se o SQL do time de banco mudar, ajuste só os models.
 
 ## Situação das histórias
-Métodos ainda não implementados respondem **501** com `{"erro": "Ainda não implementado: ..."}`.
-Para implementar, troque o `raise NotImplementedError` do método da história:
+Todas as histórias estão implementadas e cobertas por testes. Um método novo ainda não
+implementado deve lançar `NotImplementedError`, que a API responde como **501**
+`{"erro": "Ainda não implementado: ..."}`.
 
 | História | Arquivo | Métodos | Situação |
 |---|---|---|---|
 | BIBL-1 | `services/livro_service.py` | `listar_livros`, `cadastrar_livro` | feito |
 | BIBL-2 | `services/emprestimo_service.py` | `emprestar_livro`, `devolver_livro` | feito |
 | Leitores | `services/leitor_service.py` | `listar_leitores` | feito |
-| BIBL-3 | `services/relatorio_service.py` | `ranking_livros` | a fazer |
-| BIBL-4 | `services/relatorio_service.py` | `relatorio_emprestimos` | a fazer |
-| BIBL-5 | `services/relatorio_service.py` | `exportar_emprestimos_csv` | a fazer |
+| BIBL-3 | `services/relatorio_service.py` | `ranking_livros` | feito |
+| BIBL-4 | `services/relatorio_service.py` | `relatorio_emprestimos` | feito |
+| BIBL-5 | `services/relatorio_service.py` | `exportar_emprestimos_csv` | feito |
+
+Detalhes de comportamento:
+- **Ranking:** conta ativos e devolvidos; empate pelo título; livro nunca emprestado não aparece.
+- **Relatório:** filtros combinados; `fim` inclusivo; situação decidida por `data_devolucao`;
+  `inicio` depois de `fim` → 400 `"Data inicial não pode ser depois da data final."`.
+- **CSV:** reaproveita `relatorio_emprestimos`, então exporta exatamente o que o relatório mostra.
+
+Referência de rotas e mensagens: [docs/API.md](../docs/API.md). Camadas e decisões:
+[docs/ARQUITETURA.md](../docs/ARQUITETURA.md). Schema do banco: [docs/BANCO.md](../docs/BANCO.md).
 
 As mensagens de erro de cada método estão na docstring dele, iguais às do contrato. Para devolver
 um erro, lance a exceção do status certo de `app/core/erros.py`:
