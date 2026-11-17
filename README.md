@@ -175,8 +175,9 @@ script-bd/               Versão anterior dos testes do banco (use database/test
   pessoa com o link usa o sistema.
 - **Bibliotecário não pega livro.** Usuários com perfil `bibliotecario` não aparecem em
   `/leitores`; um empréstimo para eles responde 404 `Leitor não encontrado.`.
-- **Datas no fuso do servidor (UTC).** Os filtros de período e a data do CSV usam o dia em UTC.
-  Um empréstimo feito depois das 21h (horário de Brasília) conta como do dia seguinte.
+- **Dias no horário de Brasília.** O banco guarda o instante em UTC, mas os filtros de período e a
+  data do CSV usam o dia de Brasília (UTC-3): um empréstimo às 22h do dia 16 conta como dia 16.
+  As datas no JSON da API continuam em ISO 8601 com fuso.
 - **Ranking só com livros emprestados.** Livro que nunca foi emprestado não aparece no ranking.
 - **Ano no futuro** é validado pela API; o banco não tem essa regra.
 - **Trigger do banco como rede de segurança.** A API confere o limite de 3 e o perfil antes de

@@ -1,7 +1,7 @@
 import csv
 import io
 from collections.abc import Iterable
-from datetime import datetime, time, timedelta
+from datetime import UTC, date, datetime, time, timedelta, timezone
 
 from sqlalchemy import Select, func, select
 from sqlalchemy.orm import Session, joinedload
@@ -12,6 +12,22 @@ from app.schemas import FiltroRelatorio, ItemRanking
 
 CABECALHO_CSV = ["livro", "leitor", "data", "situacao"]
 BOM_UTF8 = "﻿"  # faz o Excel abrir os acentos corretamente
+
+# Os dias do relatório são os dias da biblioteca: horário de Brasília (UTC-3, sem horário de
+# verão desde 2019). O banco guarda o instante em UTC; aqui convertemos nas duas pontas.
+FUSO_BIBLIOTECA = timezone(timedelta(hours=-3), "America/Sao_Paulo")
+
+
+def inicio_do_dia(dia: date) -> datetime:
+    """00:00 do dia em Brasília, como instante em UTC (para comparar com o banco)."""
+    return datetime.combine(dia, time.min, tzinfo=FUSO_BIBLIOTECA).astimezone(UTC)
+
+
+def dia_na_biblioteca(instante: datetime) -> date:
+    """Dia em Brasília de um instante gravado no banco (sem fuso = UTC, como no SQLite)."""
+    if instante.tzinfo is None:
+        instante = instante.replace(tzinfo=UTC)
+    return instante.astimezone(FUSO_BIBLIOTECA).date()
 
 
 def montar_csv(emprestimos: Iterable[EmprestimoModel]) -> str:
@@ -26,7 +42,7 @@ def montar_csv(emprestimos: Iterable[EmprestimoModel]) -> str:
         escritor.writerow([
             emprestimo.livro.titulo,
             emprestimo.leitor.nome,
-            emprestimo.data_emprestimo.date().isoformat(),
+            dia_na_biblioteca(emprestimo.data_emprestimo).isoformat(),
             emprestimo.situacao.value,
         ])
     return BOM_UTF8 + saida.getvalue()
@@ -86,12 +102,10 @@ class RelatorioService:
         if filtro.leitor_id is not None:
             consulta = consulta.where(EmprestimoModel.leitor_id == filtro.leitor_id)
         if filtro.inicio is not None:
-            consulta = consulta.where(
-                EmprestimoModel.data_emprestimo >= datetime.combine(filtro.inicio, time.min)
-            )
+            consulta = consulta.where(EmprestimoModel.data_emprestimo >= inicio_do_dia(filtro.inicio))
         if filtro.fim is not None:
             # "fim" é inclusivo: vale até o último instante do dia, ou seja, antes do dia seguinte.
-            dia_seguinte = datetime.combine(filtro.fim + timedelta(days=1), time.min)
+            dia_seguinte = inicio_do_dia(filtro.fim + timedelta(days=1))
             consulta = consulta.where(EmprestimoModel.data_emprestimo < dia_seguinte)
         if filtro.situacao == Situacao.ATIVO:
             consulta = consulta.where(EmprestimoModel.data_devolucao.is_(None))
