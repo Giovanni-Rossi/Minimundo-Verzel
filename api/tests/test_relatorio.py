@@ -1,6 +1,6 @@
 """BIBL-4 — Relatório de empréstimos com filtros (GET /emprestimos)."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 import pytest
 
@@ -121,3 +121,34 @@ def test_data_mal_formatada_e_recusada_no_formato_do_contrato(client):
 
     assert resposta.status_code == 400
     assert "erro" in resposta.json()
+
+
+# ---------- Fuso horário: os dias dos filtros e do CSV são os dias de Brasília ----------
+# O banco guarda o instante em UTC. Brasília é UTC-3: 01h UTC do dia 17 ainda é 22h do dia 16.
+NOITE_DIA_16_EM_BRASILIA = datetime(2026, 11, 17, 1, 0, tzinfo=timezone.utc)
+
+
+def test_emprestimo_a_noite_conta_no_dia_de_brasilia_para_a_data_final(client, criar):
+    emprestimo = criar.emprestimo(
+        criar.livro("Dom Casmurro"), criar.leitor("Ana"), em=NOITE_DIA_16_EM_BRASILIA
+    )
+
+    resposta = client.get("/emprestimos", params={"fim": "2026-11-16"})
+
+    assert ids(resposta) == [emprestimo.id]
+
+
+def test_emprestimo_a_noite_nao_entra_no_dia_seguinte_pela_data_inicial(client, criar):
+    criar.emprestimo(criar.livro("Dom Casmurro"), criar.leitor("Ana"), em=NOITE_DIA_16_EM_BRASILIA)
+
+    resposta = client.get("/emprestimos", params={"inicio": "2026-11-17"})
+
+    assert ids(resposta) == []
+
+
+def test_csv_mostra_a_data_no_dia_de_brasilia(client, criar):
+    criar.emprestimo(criar.livro("Dom Casmurro"), criar.leitor("Ana"), em=NOITE_DIA_16_EM_BRASILIA)
+
+    linhas = client.get("/emprestimos/export.csv").text.lstrip("﻿").splitlines()
+
+    assert linhas[1] == "Dom Casmurro,Ana,2026-11-16,ativo"
